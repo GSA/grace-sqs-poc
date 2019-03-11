@@ -1,0 +1,18 @@
+## Terraform ##
+*.tfvars
+# Compiled files
+*.tfstate*
+# Module directory
+.terraform/
+
+## Go ##
+grace-inventory-lambda
+acceptance
+vendor/
+*.zip
+dist/
+release/
+.DS_Store
+*/.DS_Store
+handler/handler
+handler/handler.exe
