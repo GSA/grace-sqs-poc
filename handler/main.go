@@ -35,12 +35,14 @@ func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 		req := new(request.Request)
 		err := json.Unmarshal([]byte(message.Body), req)
 		if err != nil {
-			log.Printf("Not a valid request: %s", message.Body)
-			log.Printf("Error: %v", err)
+			log.Fatalf("Not a valid request: %s", message.Body)
+			log.Fatalf("Error: %v", err)
+			continue
 		}
 		err = uploadRequest(cfg.Bucket, cfg.Prefix, cfg.KmsKeyID, req)
 		if err != nil {
 			log.Fatalf("failed to upload request to s3: %v\n", err)
+			continue
 		}
 		log.Printf("Uploaded request to %s, lambda will process from here", cfg.Bucket)
 	}
@@ -48,10 +50,14 @@ func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 }
 
 func uploadRequest(bucket string, prefix string, kmsKeyID string, req *request.Request) error {
-	sess := session.New(&aws.Config{Region: &defaultRegion})
+	sess, err := session.NewSession(&aws.Config{Region: &defaultRegion})
+	if err != nil {
+		log.Fatalf("Error creating session: %v", err)
+		return err
+	}
 	svc := s3.New(sess)
 	buf := bytes.Buffer{}
-	err := json.NewEncoder(&buf).Encode(req)
+	err = json.NewEncoder(&buf).Encode(req)
 	if err != nil {
 		return fmt.Errorf("failed to encode request as JSON: %v", err)
 	}
